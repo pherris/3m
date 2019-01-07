@@ -1,0 +1,73 @@
+const SuperStack = () => {
+    // since the possible length is between 1 and 20 we'll use an Array
+    let stack = [];
+    let currentLength = 0
+
+    // print the top item in the stack (last item in array)
+    const printTop = () => {
+        console.log(stack[stack.length - 1] ? stack[stack.length - 1] : 'EMPTY');
+    }
+
+    // ensure input values are in line with constraints
+    const validateIntegerRange = (k) => {
+        if (k < -10 || k > 10) {
+            throw `${k} is not valid for SuperStack.push() (-10 to 10)`;
+        }
+        return parseInt(k, 10)
+    }
+
+    return {
+        push: (k) => {
+            k = validateIntegerRange(k)
+            currentLength = stack.push(k);
+            printTop()
+            // console.log('push with ' + k, stack)
+        },
+        pop: () => {
+            currentLength = stack.pop();
+            printTop();
+            // console.log('pop', stack)
+        },
+        inc: (e, k) => {
+            k = validateIntegerRange(k)
+            if (e > currentLength) {
+                throw `${e} elements is more than are in the stack currently (${currentLength})`;
+            }
+            for (let i = 0; i < e; i++) {
+                stack[i] = stack[i] + k;
+            }
+            printTop()
+            // console.log('inc with k:' + k + ' and e:' + e, stack)
+        }
+    }
+}
+
+// perhaps I am misreading the instructions - I believe the input should be a single string of instructions
+// which is line delimited.
+function init(input) {
+    input = input.replace(/push/g, ' push ').replace(/pop/g, ' pop ').replace(/inc/g, ' inc ')
+    const commandSet = input.split(/(push|pop|inc)+/)
+
+    if (!commandSet[0] || isNaN(commandSet[0])) {
+        return 'could not validate number of commands';
+    }
+
+    const numberOfCommands = parseInt(commandSet[0], 10)
+    const superStack = SuperStack();
+    const getArgs = (stringArgs) => stringArgs.trim().split(' ');
+
+    for (let i = 1; i < (numberOfCommands + 1) * 2; i++) {
+        const currentCommand = commandSet[i]
+        if (currentCommand === 'pop') {
+            superStack.pop();
+        } else if (currentCommand === 'push') {
+            superStack.push.apply(this, getArgs(commandSet[i + 1]));
+        } else if (currentCommand === 'inc') {
+            superStack.inc.apply(this, getArgs(commandSet[i + 1]));
+        }
+    }
+    return 'Done';
+}
+
+console.info('To run this program, enter call the init function with the text representing your instruction set.');
+console.info("e.g. init('12 \\\npush 4 \\\npop\\\npush 3\\\npush 5\\\npush 2\\\ninc 3 1\\\npop\\\npush 1\\\ninc 2 2\\\npush 4\\\npop\\\npop')");

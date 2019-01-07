@@ -1,0 +1,92 @@
+// INFO: I ran out of time on this guy unfortunately... I was a bit lost in the directions (how to determine
+// the x / y coordinates of the map's 2d cell values).  It seems to me that a breadth first search from point
+// to point until you have all of the cheese, then the same search to find Jerry would be a good solution
+// but even that is probably not as efficient as it could be because it would be the fastest from point to point
+// but not necessariarly the shortest point to Jerry at the end (as we would be walking from cheese to cheese)
+// and might pass him on the way.
+
+// I tried to give you an idea of how I might tackle this so we could discuss.
+
+const rows = 10;
+const cols = 10;
+
+// given current x/y, give me the surrounding coordinates that are within the maze
+function nextCoordinates(x, y) {
+    return [
+        [x - 1, y - 1], [x, y - 1], [x + 1, y - 1], // top row
+        [x - 1, y], [x + 1, y], // left and right
+        [x - 1, y + 1], [x, y + 1], [x + 1, y + 1] // bottom row
+    ].filter((coordinates) => {
+        const x = coordinates[0];
+        const y = coordinates[1];
+        return x >= 0 &&
+            x < cols &&
+            y >= 0 &&
+            y < rows;
+    })
+}
+
+// convenience method to create cached values so we can hydrate the cache as we go
+function getCellObject(cellContents) {
+    return {
+        canPass: () => cellContents != 1,
+        isCheese: () => cellContents == 2
+    }
+}
+
+// I'm going to assume that the multi-dimensional array represents this format:
+// 0th element = x coodinate, 1st element = indicator of path (0), wall(1), cheese(2), 2nd element = y coordinate
+// I'm implementing a breadth first search to move from current coordinates to the next thing (cheese or jerry, depending)
+// I'm not sure if I've understood the directions on this guy so I'm filling in the blanks I have so we can discuss.
+
+const mazeMeta = [[0, 0, 0], [1, 1, 2], [1, 2, 0]];
+
+// let's convert it to a hash for fast lookups - key will be x:y
+const mazeMetaMap = mazeMeta.reduce((acc, val) => {
+    // map values are objects which lets you ask if you can pass or have achieved any objectives
+    const cellContents = val[1]
+    acc[`${val[0]}:${val[2]}`] = getCellObject(cellContents)
+    return acc
+}, {})
+
+function minMoves(currentDepth, searchQueue) {
+    console.log(currentDepth, searchQueue)
+    debugger;
+    // first see if anything in the queue is what we're looking for
+    const matchingElement = searchQueue.find(coordinate => {
+        const x = coordinate[0];
+        const y = coordinate[1];
+
+        // hydrate cache if not hydrated
+        if (!mazeMetaMap[`${x}:${y}`]) {
+            mazeMetaMap[`${x}:${y}`] = getCellObject(0) // we don't have any info, so we default to a empty cell (path)
+        }
+
+        const cell = mazeMetaMap[`${x}:${y}`]
+
+        return cell.isCheese()
+    })
+
+    if (matchingElement !== undefined) {
+        return currentDepth;
+    } else {
+        // none of the current cells have cheese, so we'll take the ones we can navigate through and 
+        // search their siblings. To ensure we have a unique list, we're going to create a map with 
+        // keys of the coordinates and values of the coordinades then just take the values
+
+        debugger;
+        const siblingNeighborCache = {}
+
+        searchQueue.forEach(searchedCoordinates => {
+            nextCoordinates(searchedCoordinates[0], searchedCoordinates[1]).forEach(siblingCoordinates => {
+                siblingNeighborCache[siblingCoordinates] = siblingCoordinates;
+            })
+        })
+
+        searchQueue = Object.values(siblingNeighborCache)
+
+        return minMoves(currentDepth + 1, searchQueue)
+    }
+}
+
+minMoves(0, [[0, 0]])
